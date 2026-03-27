@@ -1,25 +1,10 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, FormEvent } from "react";
 import Image from "next/image";
 import ApiKeySettings from "@/components/ApiKeySettings";
 import ResultDisplay from "@/components/ResultDisplay";
-import HistoryPanel from "@/components/HistoryPanel";
-
-interface HistoryItem {
-  id: string;
-  scenario: string;
-  prompt: string;
-  imageUrl: string; // only kept in memory, not persisted
-  createdAt: string;
-}
-
-interface HistoryStorageItem {
-  id: string;
-  scenario: string;
-  prompt: string;
-  createdAt: string;
-}
+import GalleryPanel from "@/components/GalleryPanel";
 
 export default function Home() {
   const [scenario, setScenario] = useState("");
@@ -30,35 +15,7 @@ export default function Home() {
     imageUrl: string;
     prompt: string;
   } | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-
-  // Load history from localStorage (text only, no images)
-  useEffect(() => {
-    const stored = localStorage.getItem("jchik-history");
-    if (stored) {
-      try {
-        const items: HistoryStorageItem[] = JSON.parse(stored);
-        setHistory(items.map((item) => ({ ...item, imageUrl: "" })));
-      } catch {
-        localStorage.removeItem("jchik-history");
-      }
-    }
-  }, []);
-
-  // Save history to localStorage (exclude imageUrl to avoid quota issues)
-  useEffect(() => {
-    if (history.length > 0) {
-      const toStore: HistoryStorageItem[] = history.slice(0, 10).map(
-        ({ id, scenario, prompt, createdAt }) => ({ id, scenario, prompt, createdAt })
-      );
-      try {
-        localStorage.setItem("jchik-history", JSON.stringify(toStore));
-      } catch {
-        // quota exceeded — clear old entries and retry
-        localStorage.removeItem("jchik-history");
-      }
-    }
-  }, [history]);
+  const [galleryRefresh, setGalleryRefresh] = useState(0);
 
   const handleGenerate = async (e: FormEvent) => {
     e.preventDefault();
@@ -85,23 +42,15 @@ export default function Home() {
         return;
       }
 
-      // Build data URI from base64 response
       const imageUrl = data.imageBase64
         ? `data:${data.imageMimeType || "image/png"};base64,${data.imageBase64}`
         : "";
 
       setResult({ imageUrl, prompt: data.prompt });
 
-      // Add to history (store base64 data URI)
+      // Trigger gallery refresh after successful generation
       if (imageUrl) {
-        const newItem: HistoryItem = {
-          id: Date.now().toString(),
-          scenario: scenario.trim(),
-          prompt: data.prompt,
-          imageUrl,
-          createdAt: new Date().toISOString(),
-        };
-        setHistory((prev) => [newItem, ...prev].slice(0, 20));
+        setGalleryRefresh((n) => n + 1);
       }
     } catch {
       setError("網路錯誤，請檢查連線後再試");
@@ -196,16 +145,8 @@ export default function Home() {
       {/* Result Display */}
       {result && <ResultDisplay imageUrl={result.imageUrl} prompt={result.prompt} />}
 
-      {/* History */}
-      {history.length > 0 && (
-        <HistoryPanel
-          history={history}
-          onClear={() => {
-            setHistory([]);
-            localStorage.removeItem("jchik-history");
-          }}
-        />
-      )}
+      {/* Public Gallery */}
+      <GalleryPanel refreshTrigger={galleryRefresh} />
     </main>
   );
 }

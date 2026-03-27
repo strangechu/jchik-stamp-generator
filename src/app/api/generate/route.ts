@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getReferenceImages } from "@/lib/references";
 import { checkGlobalLimit, checkIpLimit } from "@/lib/rate-limiter";
 import { buildPrompt } from "@/lib/prompt-builder";
+import { addGalleryItem } from "@/lib/gallery-store";
 
 
 // Gemini API endpoint for image generation
@@ -161,6 +162,14 @@ export async function POST(request: NextRequest) {
         },
         { status: 422 }
       );
+    }
+
+    // --- Save to public gallery ---
+    try {
+      addGalleryItem(scenario.trim(), imageBase64, imageMimeType);
+    } catch (galleryErr) {
+      console.error("Gallery save error:", galleryErr);
+      // Non-fatal: image still returned to user even if gallery save fails
     }
 
     return NextResponse.json({
