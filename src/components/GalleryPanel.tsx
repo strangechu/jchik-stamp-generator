@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 interface GalleryItem {
   id: string;
   scenario: string;
+  author: string;
   imageFile: string;
   createdAt: string;
 }
@@ -89,25 +90,25 @@ export default function GalleryPanel({ refreshTrigger }: Props) {
         {data.items.map((item) => (
           <div
             key={item.id}
-            className="group relative rounded-xl border border-border overflow-hidden bg-white
+            className="group rounded-xl border border-border overflow-hidden bg-white
                        hover:border-primary hover:shadow-md transition-all"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl(item)}
               alt={item.scenario}
               className="w-full aspect-square object-contain p-1"
               loading="lazy"
             />
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100
-                            transition-opacity flex flex-col items-center justify-center gap-2 p-2">
-              <p className="text-white text-xs text-center line-clamp-2">{item.scenario}</p>
+            {/* Always-visible footer */}
+            <div className="px-2 pb-2 flex flex-col items-center gap-1">
+              <p className="text-xs text-center text-text line-clamp-2 w-full">{item.scenario}</p>
+              <p className="text-xs text-center text-text-light w-full">by {item.author}</p>
               <a
                 href={downloadUrl(item)}
                 download={`jchik-${item.id}.png`}
                 className="px-3 py-1 bg-primary rounded-lg text-xs font-bold text-text
-                           hover:bg-primary-dark transition-colors"
+                           hover:bg-primary-dark transition-colors opacity-0 group-hover:opacity-100"
               >
                 下載
               </a>

@@ -9,8 +9,8 @@
 - **風格鎖定**：自動載入 `/public/references/` 中的參考圖作為 Gemini API 的 style anchor，搭配嚴格的 Identity Anchor prompt，確保角色一致性
 - **情境自訂**：用戶只需輸入情境描述（如「騎腳踏車」、「在下雨天撐傘」），系統自動建構完整 prompt
 - **API Key 管理**：支援用戶自備 Gemini API Key，或使用預設 Key（附帶每日 10 次限額）
-- **生成歷史**：透過 LocalStorage 保留最近 10 筆生成紀錄
-- **一鍵下載**：生成後可直接下載 PNG 圖片
+- **公開貼圖牆**：所有人產生的貼圖儲存於 server 端，供所有訪客瀏覽與下載，超過 10 張自動分頁；每張貼圖顯示情境描述與作者名稱
+- **一鍵下載**：生成後或從貼圖牆皆可直接下載 PNG 圖片
 
 ## 技術架構
 
@@ -20,7 +20,7 @@
 | 樣式 | Tailwind CSS 4.0（亮黃色主題） |
 | 圖像生成 | Google Gemini 2.5 Flash Image API |
 | 速率限制 | 檔案持久化限流器（全域 300 次/天 + 每 IP 10 次/天） |
-| 歷史儲存 | Browser LocalStorage |
+| 公開貼圖牆 | Server 端檔案儲存（`.gallery-data/`），支援分頁瀏覽 |
 
 ## 專案結構
 
@@ -36,16 +36,21 @@ jchik-stamp-generator/
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   └── generate/
-│   │   │       └── route.ts    # POST /api/generate 端點
+│   │   │   ├── generate/
+│   │   │   │   └── route.ts    # POST /api/generate 端點
+│   │   │   └── gallery/
+│   │   │       ├── route.ts    # GET /api/gallery?page=N
+│   │   │       └── image/
+│   │   │           └── route.ts # GET /api/gallery/image?file=xxx
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx            # 主頁面（表單 + 結果顯示）
 │   ├── components/
 │   │   ├── ApiKeySettings.tsx  # API Key 設定區塊
-│   │   ├── HistoryPanel.tsx    # 歷史紀錄面板
+│   │   ├── GalleryPanel.tsx    # 公開貼圖牆（分頁瀏覽 + 下載）
 │   │   └── ResultDisplay.tsx   # 生成結果顯示與下載
 │   └── lib/
+│       ├── gallery-store.ts    # Server 端圖片儲存與分頁邏輯
 │       ├── prompt-builder.ts   # Identity-Locked Prompt 建構器
 │       ├── rate-limiter.ts     # IP 速率限制邏輯
 │       └── references.ts       # 參考圖載入（轉 base64）
@@ -105,10 +110,12 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 ## 使用方式
 
-1. 開啟網頁後，在輸入框中描述你想要的情境（例如：「騎腳踏車」、「在雨中跑步」）
-2. （選配）展開「API Key 設定」區塊，輸入你自己的 Gemini API Key
-3. 按下「產生貼圖」按鈕
-4. 等待生成完成後，可預覽圖片、查看完整 prompt、或點擊下載按鈕儲存
+1. 開啟網頁後，在輸入框中描述你想要的情境（最多 30 字，例如：「騎腳踏車」、「在雨中跑步」）
+2. （選配）在作者欄位輸入你的名字，留空則顯示「匿名」
+3. （選配）展開「API Key 設定」區塊，輸入你自己的 Gemini API Key
+4. 按下「產生貼圖」按鈕
+5. 等待生成完成後，可預覽圖片、查看完整 prompt、或點擊下載按鈕儲存
+6. 頁面底部「大家產生的貼圖」牆會自動更新，所有訪客都可瀏覽與下載，每張貼圖固定顯示情境與作者名稱
 
 ## API 端點
 
@@ -119,6 +126,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```json
 {
   "scenario": "騎腳踏車",
+  "author": "你的名字（選填，最多 20 字）",
   "apiKey": "your_api_key（選填）"
 }
 ```
@@ -140,11 +148,38 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 | 狀態碼 | 說明 |
 |--------|------|
-| 400 | 情境描述為空 |
+| 400 | 情境描述為空或超過 30 字 |
 | 401 | 未設定 API Key |
 | 429 | 超過每日使用次數限制 |
 | 422 | API 未回傳圖片（可能被內容安全過濾） |
 | 500 | 伺服器內部錯誤 |
+
+### `GET /api/gallery?page=N`
+
+回傳分頁後的公開貼圖列表（每頁 10 筆）。
+
+**Response：**
+
+```json
+{
+  "items": [
+    {
+      "id": "1234567890-abc12",
+      "scenario": "在下雨天撐傘",
+      "author": "strangechu",
+      "imageFile": "1234567890-abc12.png",
+      "createdAt": "2026-03-27T10:00:00.000Z"
+    }
+  ],
+  "total": 42,
+  "totalPages": 5,
+  "page": 1
+}
+```
+
+### `GET /api/gallery/image?file=xxx.png`
+
+提供指定圖片的實際檔案（`image/png` 或 `image/jpeg`），可直接用於 `<img src>` 或下載連結。
 
 ## 速率限制
 

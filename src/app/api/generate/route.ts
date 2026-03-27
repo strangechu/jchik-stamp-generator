@@ -12,15 +12,23 @@ const GEMINI_API_URL =
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { scenario, apiKey: userApiKey } = body as {
+    const { scenario, apiKey: userApiKey, author } = body as {
       scenario?: string;
       apiKey?: string;
+      author?: string;
     };
 
     // --- Validate input ---
     if (!scenario || scenario.trim().length === 0) {
       return NextResponse.json(
         { error: "請輸入情境描述" },
+        { status: 400 }
+      );
+    }
+
+    if (scenario.trim().length > 30) {
+      return NextResponse.json(
+        { error: "情境描述不可超過 30 字" },
         { status: 400 }
       );
     }
@@ -166,7 +174,7 @@ export async function POST(request: NextRequest) {
 
     // --- Save to public gallery ---
     try {
-      addGalleryItem(scenario.trim(), imageBase64, imageMimeType);
+      addGalleryItem(scenario.trim(), author || "", imageBase64, imageMimeType);
     } catch (galleryErr) {
       console.error("Gallery save error:", galleryErr);
       // Non-fatal: image still returned to user even if gallery save fails

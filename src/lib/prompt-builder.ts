@@ -19,7 +19,7 @@ const SCENE_INSTRUCTION = `[SCENE — only change action, pose, props, and backg
 
 // 風格與限制
 const STYLE_CONSTRAINTS = `[STYLE CONSTRAINTS]
-- White or transparent background
+- White background only (no transparency)
 - Flat design, bold black outlines, solid color blocks
 - No gradients, no shadows, no 3D effects
 - Absolutely no text, no letters, no words, no watermarks, no captions

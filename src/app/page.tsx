@@ -8,6 +8,7 @@ import GalleryPanel from "@/components/GalleryPanel";
 
 export default function Home() {
   const [scenario, setScenario] = useState("");
+  const [author, setAuthor] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -31,6 +32,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           scenario: scenario.trim(),
+          author: author.trim() || undefined,
           apiKey: apiKey.trim() || undefined,
         }),
       });
@@ -90,12 +92,26 @@ export default function Home() {
                          focus:outline-none focus:border-primary transition-colors
                          bg-white placeholder:text-text-light/50"
               rows={3}
-              maxLength={200}
+              maxLength={30}
               suppressHydrationWarning
             />
             <div className="text-right text-sm text-text-light mt-1">
-              {scenario.length}/200
+              {scenario.length}/30
             </div>
+          </div>
+
+          <div>
+            <input
+              type="text"
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              placeholder="作者名稱（選填，留空顯示「匿名」）"
+              maxLength={20}
+              className="w-full p-3 border-2 border-border rounded-xl text-base
+                         focus:outline-none focus:border-primary transition-colors
+                         bg-white placeholder:text-text-light/50"
+              suppressHydrationWarning
+            />
           </div>
 
           <button

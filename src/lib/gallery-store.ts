@@ -16,6 +16,7 @@ export const PAGE_SIZE = 10;
 export interface GalleryItem {
   id: string;
   scenario: string;
+  author: string;
   imageFile: string; // filename only, e.g. "1234567890.png"
   createdAt: string;
 }
@@ -43,6 +44,7 @@ function saveMeta(items: GalleryItem[]) {
 /** Save a new image to disk and prepend its metadata. */
 export function addGalleryItem(
   scenario: string,
+  author: string,
   imageBase64: string,
   mimeType: string
 ): GalleryItem {
@@ -59,6 +61,7 @@ export function addGalleryItem(
   const item: GalleryItem = {
     id,
     scenario,
+    author: author.trim() || "匿名",
     imageFile,
     createdAt: new Date().toISOString(),
   };
