@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getReferenceImages } from "@/lib/references";
-import { checkRateLimit } from "@/lib/rate-limiter";
+import { checkGlobalLimit, checkIpLimit } from "@/lib/rate-limiter";
 import { buildPrompt } from "@/lib/prompt-builder";
 
 
@@ -37,13 +37,26 @@ export async function POST(request: NextRequest) {
 
     // --- Rate limiting (only when using default key) ---
     if (usingDefaultKey) {
+      // 第一層：全域每日總量上限（300 次/天）
+      const globalCheck = checkGlobalLimit();
+      if (!globalCheck.allowed) {
+        return NextResponse.json(
+          {
+            error: "今日服務已達使用上限，請明天再試，或輸入自己的 API Key 以繼續使用。",
+            remaining: 0,
+          },
+          { status: 429 }
+        );
+      }
+
+      // 第二層：單一 IP 每日上限（10 次/天）
       const ip =
         request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
         request.headers.get("x-real-ip") ||
         "unknown";
 
-      const { allowed } = checkRateLimit(ip);
-      if (!allowed) {
+      const ipCheck = checkIpLimit(ip);
+      if (!ipCheck.allowed) {
         return NextResponse.json(
           {
             error: "已達每日使用上限（10 次）。請輸入自己的 API Key 以解除限制。",

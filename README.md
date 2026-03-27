@@ -19,7 +19,7 @@
 | 前端框架 | Next.js 15 + React 19 + TypeScript |
 | 樣式 | Tailwind CSS 4.0（亮黃色主題） |
 | 圖像生成 | Google Gemini 2.5 Flash Image API |
-| 速率限制 | In-memory rate limiter（每 IP 每日 10 次） |
+| 速率限制 | 檔案持久化限流器（全域 300 次/天 + 每 IP 10 次/天） |
 | 歷史儲存 | Browser LocalStorage |
 
 ## 專案結構
@@ -148,11 +148,16 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 ## 速率限制
 
-當使用預設 API Key 時，系統會依 IP 進行每日限額控制：
+當使用預設 API Key 時，系統採用**雙層防護**機制：
 
-- 每個 IP 每天最多 **10 次**生成請求
-- 每日午夜 (00:00) 自動重置
-- 用戶自行輸入 API Key 時**不受此限制**
+| 層級 | 對象 | 上限 | 重置時間 |
+|------|------|------|----------|
+| 全域總量 | 所有請求合計 | **300 次/天** | 每日午夜 00:00 |
+| 單一 IP | 每個 IP 位址 | **10 次/天** | 每日午夜 00:00 |
+
+- 計數器採**檔案持久化**（`.rate-limit-data/`），server 重啟後不歸零
+- 用戶自行輸入 API Key 時**完全不受限制**（使用自己的配額）
+- 建議同時在 [Google AI Studio](https://aistudio.google.com/) 設定每日花費上限作為終極保護
 
 ## 參考圖管理
 

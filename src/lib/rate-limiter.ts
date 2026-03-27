@@ -1,17 +1,27 @@
 /**
- * 簡易的記憶體內 IP 限流器。
- * 當使用者未提供自己的 API Key 而使用預設 Key 時啟用。
- * 限制：每個 IP 每天最多 10 次。
+ * IP 限流器 + 全域每日總量上限。
+ * - IP 限流：每個 IP 每天最多 10 次（僅使用預設 Key 時）
+ * - 全域上限：預設 Key 每天最多被呼叫 300 次，超過則關閉服務
+ *
+ * 使用檔案持久化，server 重啟不歸零。
  */
 
-const DAILY_LIMIT = 10;
+import fs from "fs";
+import path from "path";
 
-interface RateEntry {
-  count: number;
-  resetAt: number; // timestamp
+const IP_DAILY_LIMIT = 10;
+const GLOBAL_DAILY_LIMIT = 300;
+
+// 持久化檔案路徑
+const DATA_DIR = path.join(process.cwd(), ".rate-limit-data");
+const GLOBAL_FILE = path.join(DATA_DIR, "global.json");
+const IP_FILE = path.join(DATA_DIR, "ip.json");
+
+function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
 }
-
-const store = new Map<string, RateEntry>();
 
 function getNextMidnight(): number {
   const now = new Date();
@@ -21,22 +31,99 @@ function getNextMidnight(): number {
   return tomorrow.getTime();
 }
 
-export function checkRateLimit(ip: string): {
+// --- 全域計數器（持久化） ---
+
+interface GlobalData {
+  count: number;
+  resetAt: number;
+}
+
+function loadGlobal(): GlobalData {
+  ensureDataDir();
+  try {
+    const raw = fs.readFileSync(GLOBAL_FILE, "utf-8");
+    return JSON.parse(raw) as GlobalData;
+  } catch {
+    return { count: 0, resetAt: getNextMidnight() };
+  }
+}
+
+function saveGlobal(data: GlobalData) {
+  ensureDataDir();
+  fs.writeFileSync(GLOBAL_FILE, JSON.stringify(data));
+}
+
+// --- IP 計數器（持久化） ---
+
+interface IpStore {
+  resetAt: number;
+  entries: Record<string, number>;
+}
+
+function loadIpStore(): IpStore {
+  ensureDataDir();
+  try {
+    const raw = fs.readFileSync(IP_FILE, "utf-8");
+    return JSON.parse(raw) as IpStore;
+  } catch {
+    return { resetAt: getNextMidnight(), entries: {} };
+  }
+}
+
+function saveIpStore(data: IpStore) {
+  ensureDataDir();
+  fs.writeFileSync(IP_FILE, JSON.stringify(data));
+}
+
+// --- 公開 API ---
+
+export function checkGlobalLimit(): {
   allowed: boolean;
   remaining: number;
 } {
   const now = Date.now();
-  const entry = store.get(ip);
+  const data = loadGlobal();
 
-  if (!entry || now >= entry.resetAt) {
-    store.set(ip, { count: 1, resetAt: getNextMidnight() });
-    return { allowed: true, remaining: DAILY_LIMIT - 1 };
+  // 過了午夜，重置
+  if (now >= data.resetAt) {
+    const fresh: GlobalData = { count: 1, resetAt: getNextMidnight() };
+    saveGlobal(fresh);
+    return { allowed: true, remaining: GLOBAL_DAILY_LIMIT - 1 };
   }
 
-  if (entry.count >= DAILY_LIMIT) {
+  if (data.count >= GLOBAL_DAILY_LIMIT) {
     return { allowed: false, remaining: 0 };
   }
 
-  entry.count += 1;
-  return { allowed: true, remaining: DAILY_LIMIT - entry.count };
+  data.count += 1;
+  saveGlobal(data);
+  return { allowed: true, remaining: GLOBAL_DAILY_LIMIT - data.count };
+}
+
+export function checkIpLimit(ip: string): {
+  allowed: boolean;
+  remaining: number;
+} {
+  const now = Date.now();
+  const store = loadIpStore();
+
+  // 過了午夜，清空所有 IP 記錄
+  if (now >= store.resetAt) {
+    const fresh: IpStore = {
+      resetAt: getNextMidnight(),
+      entries: { [ip]: 1 },
+    };
+    saveIpStore(fresh);
+    return { allowed: true, remaining: IP_DAILY_LIMIT - 1 };
+  }
+
+  const count = store.entries[ip] || 0;
+
+  if (count >= IP_DAILY_LIMIT) {
+    return { allowed: false, remaining: 0 };
+  }
+
+  store.entries[ip] = count + 1;
+  saveIpStore(store);
+  return { allowed: true, remaining: IP_DAILY_LIMIT - (count + 1) };
 }

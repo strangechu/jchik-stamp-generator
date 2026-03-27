@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
+import Image from "next/image";
 import ApiKeySettings from "@/components/ApiKeySettings";
 import ResultDisplay from "@/components/ResultDisplay";
 import HistoryPanel from "@/components/HistoryPanel";
@@ -113,8 +114,9 @@ export default function Home() {
     <main className="max-w-3xl mx-auto px-4 py-8">
       {/* Header */}
       <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-primary-dark mb-2">
-          🐤 囧雞貼圖產生器
+        <h1 className="text-4xl font-bold text-primary-dark mb-2 inline-flex items-center justify-center gap-2">
+          <Image src="/references/01.png" alt="囧雞" width={48} height={48} className="inline-block" />
+          囧雞貼圖產生器
         </h1>
         <p className="text-text-light text-lg">
           JChik Stamp Generator — AI 驅動的囧雞風格貼圖
@@ -140,6 +142,7 @@ export default function Home() {
                          bg-white placeholder:text-text-light/50"
               rows={3}
               maxLength={200}
+              suppressHydrationWarning
             />
             <div className="text-right text-sm text-text-light mt-1">
               {scenario.length}/200
