@@ -87,7 +87,7 @@ export default function Home() {
             <textarea
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
-              placeholder="例如：開心地吃著炸雞、在下雨天撐傘、生氣地跺腳、送你一朵花..."
+              placeholder="例如：無奈地加班、在雨中漫步..."
               className="w-full p-4 border-2 border-border rounded-xl text-base resize-none
                          focus:outline-none focus:border-primary transition-colors
                          bg-white placeholder:text-text-light/50"
@@ -114,6 +114,9 @@ export default function Home() {
             />
           </div>
 
+          <p className="text-xs text-text-light text-center">
+            💡 注意：生成結果將會公開且標記作者
+          </p>
           <button
             type="submit"
             disabled={loading || !scenario.trim()}
@@ -163,6 +166,52 @@ export default function Home() {
 
       {/* Public Gallery */}
       <GalleryPanel refreshTrigger={galleryRefresh} />
+
+      {/* Support Section */}
+      <section className="bg-surface rounded-2xl shadow-md border border-border p-6 mt-6">
+        <h2 className="text-xl font-semibold text-primary-dark mb-4">支持囧雞原創貼圖</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <a
+            href="https://store.line.me/stickershop/product/1288484"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group rounded-xl border border-border overflow-hidden bg-white
+                       hover:border-primary hover:shadow-md transition-all flex flex-col items-center p-3 gap-2"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://stickershop.line-scdn.net/stickershop/v1/product/1288484/LINEStorePC/main.png?v=1"
+              alt="囧雞第一彈"
+              className="w-full object-contain rounded-lg"
+            />
+            <span className="text-sm font-medium text-text group-hover:text-primary-dark transition-colors">
+              第一彈貼圖 →
+            </span>
+          </a>
+          <a
+            href="https://store.line.me/stickershop/product/30304770"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group rounded-xl border border-border overflow-hidden bg-white
+                       hover:border-primary hover:shadow-md transition-all flex flex-col items-center p-3 gap-2"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://stickershop.line-scdn.net/stickershop/v1/product/30304770/LINEStorePC/main.png?v=1"
+              alt="囧雞第二彈"
+              className="w-full object-contain rounded-lg"
+            />
+            <span className="text-sm font-medium text-text group-hover:text-primary-dark transition-colors">
+              第二彈貼圖 →
+            </span>
+          </a>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="mt-8 pt-6 border-t border-border text-center text-xs text-text-light">
+        <p>本專案為個人創作工具，「囧雞」角色為原創 IP，未經授權請勿將生成的圖像用於商業用途。</p>
+      </footer>
     </main>
   );
 }

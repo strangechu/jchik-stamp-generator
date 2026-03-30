@@ -86,29 +86,29 @@ export default function GalleryPanel({ refreshTrigger }: Props) {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {data.items.map((item) => (
           <div
             key={item.id}
             className="group rounded-xl border border-border overflow-hidden bg-white
-                       hover:border-primary hover:shadow-md transition-all"
+                       hover:border-primary hover:shadow-md transition-all flex flex-col"
           >
               {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl(item)}
               alt={item.scenario}
-              className="w-full aspect-square object-contain p-1"
+              className="w-full aspect-square object-contain p-2"
               loading="lazy"
             />
             {/* Always-visible footer */}
-            <div className="px-2 pb-2 flex flex-col items-center gap-1">
-              <p className="text-xs text-center text-text line-clamp-2 w-full">{item.scenario}</p>
+            <div className="px-3 py-2 flex flex-col items-center gap-2 flex-grow">
+              <p className="text-sm text-center text-text w-full break-words line-clamp-4">{item.scenario}</p>
               <p className="text-xs text-center text-text-light w-full">by {item.author}</p>
               <a
                 href={downloadUrl(item)}
                 download={`jchik-${item.id}.png`}
-                className="px-3 py-1 bg-primary rounded-lg text-xs font-bold text-text
-                           hover:bg-primary-dark transition-colors opacity-0 group-hover:opacity-100"
+                className="px-3 py-1.5 bg-primary rounded-lg text-xs font-bold text-text
+                           hover:bg-primary-dark transition-colors opacity-0 group-hover:opacity-100 mt-auto"
               >
                 下載
               </a>

@@ -33,22 +33,21 @@ export default function ApiKeySettings({ apiKey, onApiKeyChange }: Props) {
         {apiKey ? (
           <span className="text-green-600 text-xs">(已設定)</span>
         ) : (
-          <span className="text-xs text-text-light/60">(使用預設)</span>
+          <span className="text-xs text-red-500">(未輸入，生圖將有每日十張限制)</span>
         )}
       </button>
 
       {isOpen && (
         <div className="mt-3 p-4 bg-surface rounded-xl border border-border">
           <p className="text-sm text-text-light mb-3">
-            輸入你自己的 Nano-Banana API Key 以解除每日限制。未輸入則使用預設
-            Key（每日限 10 次）。
+            輸入你自己的 Google AI Studio API Key 以解除每日限制。未輸入則為小雞自掏腰包。
           </p>
           <div className="flex gap-2">
             <input
               type="password"
               value={apiKey}
               onChange={(e) => onApiKeyChange(e.target.value)}
-              placeholder="sk-..."
+              placeholder="Google AI Studio API Key"
               className="flex-1 px-3 py-2 border border-border rounded-lg text-sm
                          focus:outline-none focus:border-primary bg-white"
             />

@@ -52,14 +52,6 @@ export default function ResultDisplay({ imageUrl, prompt }: Props) {
             下載貼圖
           </button>
 
-          <details className="text-sm">
-            <summary className="text-text-light cursor-pointer hover:text-text">
-              查看完整 Prompt
-            </summary>
-            <p className="mt-2 p-3 bg-bg rounded-lg text-text-light break-all text-xs font-mono">
-              {prompt}
-            </p>
-          </details>
         </div>
       ) : (
         <div className="text-center py-8 text-text-light">
